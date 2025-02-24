@@ -3,33 +3,32 @@ package tn.esprit.tpfoyer.services;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import tn.esprit.tpfoyer.entity.Bloc;
+import tn.esprit.tpfoyer.repository.BlocRepository;
 
 import java.util.List;
 @Service
 @AllArgsConstructor
 public class BlocServiceImp implements IBlocService{
+    public BlocRepository blocRepository;
     @Override
-    public List<Bloc> retrieveAllBlocs() {
-        return null;
+    public List<Bloc> retrieveAllBlocs() {return blocRepository.findAll();
     }
 
     @Override
     public Bloc retrieveBloc(Long blocId) {
-        return null;
+        return blocRepository.findById(blocId).get();
     }
 
     @Override
     public Bloc addBloc(Bloc b) {
-        return null;
+        return blocRepository.save(b);
     }
 
     @Override
-    public void removeBloc(Long blocId) {
-
-    }
+    public void removeBloc(Long blocId) {blocRepository.deleteById(blocId);}
 
     @Override
     public Bloc modifyBloc(Bloc bloc) {
-        return null;
+        return blocRepository.save(bloc);
     }
 }
