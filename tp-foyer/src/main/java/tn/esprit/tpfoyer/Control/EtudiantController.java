@@ -1,10 +1,9 @@
 package tn.esprit.tpfoyer.Control;
 
 import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import tn.esprit.tpfoyer.entity.Chambre;
 import tn.esprit.tpfoyer.entity.Etudiant;
-import tn.esprit.tpfoyer.services.IChambreService;
 import tn.esprit.tpfoyer.services.IEtudiantService;
 
 import java.util.List;
@@ -13,7 +12,8 @@ import java.util.List;
 @AllArgsConstructor
 @RequestMapping("/etudiant")
 public class EtudiantController {
-    IEtudiantService etudiantService;
+
+   public IEtudiantService etudiantService;
 
     // http://localhost:8089/tpfoyer/etudiant/retrieve-all-etudiants
     @GetMapping("/retrieve-all-etudiants")

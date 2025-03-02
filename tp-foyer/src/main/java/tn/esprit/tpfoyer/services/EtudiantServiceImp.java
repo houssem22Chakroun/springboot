@@ -2,7 +2,6 @@ package tn.esprit.tpfoyer.services;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
-import tn.esprit.tpfoyer.entity.Chambre;
 import tn.esprit.tpfoyer.entity.Etudiant;
 import tn.esprit.tpfoyer.repository.EtudiantRepository;
 
