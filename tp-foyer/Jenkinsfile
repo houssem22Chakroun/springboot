@@ -1,13 +1,65 @@
 pipeline {
-    agent any
+    agent { label 'linux-slave' }
+
     tools {
+        jdk 'JAVA_HOME'
         maven 'M2_HOME'
     }
+
+    environment {
+        SONAR_HOST_URL = 'http://192.168.56.10:9000' // SonarQube server on your Linux slave
+    }
+
     stages {
-        stage('MAVEN') {
+
+        stage('Checkout') {
             steps {
-                sh "mvn -version"
+                withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                    git branch: 'main',
+                        url: "https://${GITHUB_TOKEN}@github.com/houssem22Chakroun/springboot.git"
+                }
             }
         }
+
+        stage('Build') {
+            steps {
+                dir('springboot') {
+                    sh 'mvn clean install -DskipTests'
+                }
+            }
+        }
+
+        stage('Maven Package') {
+            steps {
+                dir('springboot') {
+                    sh 'mvn package -DskipTests'
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                script {
+                    withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                        dir('springboot') {
+                            sh '''
+                                set -e
+                                mvn clean verify sonar:sonar \
+                                  -DskipTests=true \
+                                  -DskipITs=true \
+                                  -Dsonar.host.url=$SONAR_HOST_URL \
+                                  -Dsonar.login=$SONAR_TOKEN
+                            '''
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+    post {
+        success { echo '✅ Build & SonarQube analysis succeeded!' }
+        failure { echo '❌ Build or SonarQube analysis failed!' }
     }
 }
