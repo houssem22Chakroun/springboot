@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'linux-slave' }
+    agent any
 
     tools {
         jdk 'JAVA_HOME'
@@ -7,23 +7,20 @@ pipeline {
     }
 
     environment {
-        SONAR_HOST_URL = 'http://192.168.56.10:9000' // SonarQube server on your Linux slave
+        SONAR_HOST_URL = 'http://192.168.56.10:9000' // SonarQube URL on your slave
     }
 
     stages {
-
         stage('Checkout') {
             steps {
-                withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-                    git branch: 'main',
-                        url: "https://${GITHUB_TOKEN}@github.com/houssem22Chakroun/springboot.git"
-                }
+                git branch: 'main',
+                    url: 'https://github.com/houssem22Chakroun/springboot.git'
             }
         }
 
         stage('Build') {
             steps {
-                dir('springboot') {
+                dir('tpfoyer') { // make sure this is where your pom.xml is
                     sh 'mvn clean install -DskipTests'
                 }
             }
@@ -31,7 +28,7 @@ pipeline {
 
         stage('Maven Package') {
             steps {
-                dir('springboot') {
+                dir('tpfoyer') {
                     sh 'mvn package -DskipTests'
                 }
             }
@@ -41,12 +38,10 @@ pipeline {
             steps {
                 script {
                     withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
-                        dir('springboot') {
+                        dir('tpfoyer') {
                             sh '''
-                                set -e
                                 mvn clean verify sonar:sonar \
                                   -DskipTests=true \
-                                  -DskipITs=true \
                                   -Dsonar.host.url=$SONAR_HOST_URL \
                                   -Dsonar.login=$SONAR_TOKEN
                             '''
@@ -55,11 +50,10 @@ pipeline {
                 }
             }
         }
-
     }
 
     post {
-        success { echo '✅ Build & SonarQube analysis succeeded!' }
+        success { echo '✅ Build and SonarQube analysis succeeded!' }
         failure { echo '❌ Build or SonarQube analysis failed!' }
     }
 }
