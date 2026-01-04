@@ -20,7 +20,7 @@ pipeline {
 
         stage('Build') {
             steps {
-                dir('tpfoyer') { // make sure this is where your pom.xml is
+                dir('tp-foyer') { // make sure this is where your pom.xml is
                     sh 'mvn clean install -DskipTests'
                 }
             }
@@ -28,7 +28,7 @@ pipeline {
 
         stage('Maven Package') {
             steps {
-                dir('tpfoyer') {
+                dir('tp-foyer') {
                     sh 'mvn package -DskipTests'
                 }
             }
@@ -38,7 +38,7 @@ pipeline {
             steps {
                 script {
                     withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
-                        dir('tpfoyer') {
+                        dir('tp-foyer') {
                             sh '''
                                 mvn clean verify sonar:sonar \
                                   -DskipTests=true \
