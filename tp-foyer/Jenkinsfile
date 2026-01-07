@@ -60,7 +60,7 @@ pipeline {
         waitForQualityGate abortPipeline: true
         }
      }
-
+}
 
     post {
         success { echo '✅ Build and SonarQube analysis succeeded!' }
