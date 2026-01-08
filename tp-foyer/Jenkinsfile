@@ -14,8 +14,11 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/houssem22Chakroun/springboot.git'
+                dir('tp-foyer') {
+                    deleteDir() // wipes any corrupted .git folder
+                    git branch: 'main',
+                        url: 'https://github.com/houssem22Chakroun/springboot.git'
+                }
             }
         }
 
@@ -52,7 +55,14 @@ pipeline {
             }
         }
 
-
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 4, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+    }
 
     post {
         success { echo '✅ Build and SonarQube Quality Gate passed!' }
