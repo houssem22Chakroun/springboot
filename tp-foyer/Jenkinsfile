@@ -14,9 +14,11 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                deleteDir()
-                git branch: 'main',
-                    url: 'https://github.com/houssem22Chakroun/springboot.git'
+                dir('tp-foyer') {
+                    deleteDir() // wipes everything including corrupted .git
+                    git branch: 'main',
+                        url: 'https://github.com/houssem22Chakroun/springboot.git'
+                }
             }
         }
 
