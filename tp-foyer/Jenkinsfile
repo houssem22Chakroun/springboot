@@ -7,24 +7,20 @@ pipeline {
     }
 
     environment {
-        SONAR_HOST_URL = 'http://192.168.56.10:9000' // SonarQube URL
+        SONAR_HOST_URL = 'http://192.168.56.10:9000' // SonarQube URL on your slave
     }
 
     stages {
-
         stage('Checkout') {
             steps {
-                dir('tp-foyer') {
-                    deleteDir() // wipes any corrupted .git folder
-                    git branch: 'main',
-                        url: 'https://github.com/houssem22Chakroun/springboot.git'
-                }
+                git branch: 'main',
+                    url: 'https://github.com/houssem22Chakroun/springboot.git'
             }
         }
 
         stage('Build') {
             steps {
-                dir('tp-foyer') {
+                dir('tp-foyer') { // make sure this is where your pom.xml is
                     sh 'mvn clean install -DskipTests'
                 }
             }
@@ -54,18 +50,20 @@ pipeline {
                 }
             }
         }
-
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 4, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
     }
 
+
+
+     stage('Quality Gate'){
+        steps{
+        timeout(time:2,unit:'MINUTES'){
+        waitForQualityGate abortPipeline: true
+        }
+     }
+}
+
     post {
-        success { echo '✅ Build and SonarQube Quality Gate passed!' }
-        failure { echo '❌ Build failed or Quality Gate failed!' }
+        success { echo '✅ Build and SonarQube analysis succeeded!' }
+        failure { echo '❌ Build or SonarQube analysis failed!' }
     }
 }
