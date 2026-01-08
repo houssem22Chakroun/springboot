@@ -13,24 +13,14 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/houssem22Chakroun/springboot.git'
+                git branch: 'main', url: 'https://github.com/houssem22Chakroun/springboot.git'
             }
         }
 
         stage('Build') {
             steps {
-                // Remove dir('tp-foyer') if pom.xml is in the root of the repo
                 dir('tp-foyer') {
                     sh 'mvn clean install -DskipTests'
-                }
-            }
-        }
-
-        stage('Maven Package') {
-            steps {
-                dir('tp-foyer') {
-                    sh 'mvn package -DskipTests'
                 }
             }
         }
@@ -38,21 +28,22 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 script {
-                    withCredentials([string(credentialsId: 'SonarQube', variable: 'SONAR_TOKEN')]) {
-                        dir('tp-foyer') {
-                            sh """
-                                mvn clean verify sonar:sonar \
-                                  -DskipTests=true \
-                                  -Dsonar.host.url=${SONAR_HOST_URL} \
-                                  -Dsonar.login=${SONAR_TOKEN}
-                            """
+                    // This wrapper is the missing piece of the puzzle
+                    withSonarQubeEnv('SonarQube') {
+                        withCredentials([string(credentialsId: 'SonarQube', variable: 'SONAR_TOKEN')]) {
+                            dir('tp-foyer') {
+                                sh """
+                                    mvn sonar:sonar \
+                                      -Dsonar.host.url=${SONAR_HOST_URL} \
+                                      -Dsonar.login=${SONAR_TOKEN}
+                                """
+                            }
                         }
                     }
                 }
             }
         }
 
-        // MOVED INSIDE THE STAGES BLOCK
         stage('Quality Gate') {
             steps {
                 timeout(time: 4, unit: 'MINUTES') {
@@ -60,7 +51,7 @@ pipeline {
                 }
             }
         }
-    } // END OF STAGES
+    }
 
     post {
         success { echo '✅ Build and SonarQube analysis succeeded!' }
