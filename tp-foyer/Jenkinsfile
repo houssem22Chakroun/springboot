@@ -12,13 +12,9 @@ pipeline {
 
     stages {
 
-         stage('Clean Workspace') {
-                    steps {
-                        deleteDir() // deletes the workspace
-                    }
-                }
         stage('Checkout') {
             steps {
+                deleteDir()
                 git branch: 'main',
                     url: 'https://github.com/houssem22Chakroun/springboot.git'
             }
