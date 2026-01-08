@@ -7,7 +7,7 @@ pipeline {
     }
 
     environment {
-        SONAR_HOST_URL = 'http://192.168.56.10:9000' // SonarQube URL on your slave
+        SONAR_HOST_URL = 'http://192.168.56.10:9000'
     }
 
     stages {
@@ -20,7 +20,7 @@ pipeline {
 
         stage('Build') {
             steps {
-                dir('tp-foyer') { // make sure this is where your pom.xml is
+                dir('tp-foyer') {
                     sh 'mvn clean install -DskipTests'
                 }
             }
@@ -37,16 +37,27 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 script {
-                    withCredentials([string(credentialsId: 'SonarQube', variable: 'SONAR_TOKEN')]) {
-                        dir('tp-foyer') {
-                            sh '''
-                                mvn clean verify sonar:sonar \
-                                  -DskipTests=true \
-                                  -Dsonar.host.url=$SONAR_HOST_URL \
-                                  -Dsonar.login=$SONAR_TOKEN
-                            '''
+                    // ADDED: withSonarQubeEnv allows Jenkins to track the analysis ID
+                    withSonarQubeEnv('SonarQube') {
+                        withCredentials([string(credentialsId: 'SonarQube', variable: 'SONAR_TOKEN')]) {
+                            dir('tp-foyer') {
+                                sh """
+                                    mvn sonar:sonar \
+                                      -Dsonar.host.url=${SONAR_HOST_URL} \
+                                      -Dsonar.login=${SONAR_TOKEN}
+                                """
+                            }
                         }
                     }
+                }
+            }
+        }
+
+        // ADDED: This stage waits for the SonarQube callback
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
                 }
             }
         }
