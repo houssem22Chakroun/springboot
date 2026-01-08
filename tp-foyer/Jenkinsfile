@@ -7,7 +7,7 @@ pipeline {
     }
 
     environment {
-        SONAR_HOST_URL = 'http://192.168.56.10:9000' // SonarQube URL on your slave
+        SONAR_HOST_URL = 'http://192.168.56.10:9000'
     }
 
     stages {
@@ -20,7 +20,8 @@ pipeline {
 
         stage('Build') {
             steps {
-                dir('tp-foyer') { // make sure this is where your pom.xml is
+                // Remove dir('tp-foyer') if pom.xml is in the root of the repo
+                dir('tp-foyer') {
                     sh 'mvn clean install -DskipTests'
                 }
             }
@@ -39,28 +40,27 @@ pipeline {
                 script {
                     withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
                         dir('tp-foyer') {
-                            sh '''
+                            sh """
                                 mvn clean verify sonar:sonar \
                                   -DskipTests=true \
-                                  -Dsonar.host.url=$SONAR_HOST_URL \
-                                  -Dsonar.login=$SONAR_TOKEN
-                            '''
+                                  -Dsonar.host.url=${SONAR_HOST_URL} \
+                                  -Dsonar.login=${SONAR_TOKEN}
+                            """
                         }
                     }
                 }
             }
         }
-    }
 
-
-
-     stage('Quality Gate'){
-        steps{
-        timeout(time:2,unit:'MINUTES'){
-        waitForQualityGate abortPipeline: true
+        // MOVED INSIDE THE STAGES BLOCK
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 4, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
         }
-     }
-}
+    } // END OF STAGES
 
     post {
         success { echo '✅ Build and SonarQube analysis succeeded!' }
