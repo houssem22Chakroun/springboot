@@ -7,7 +7,7 @@ pipeline {
     }
 
     environment {
-        SONAR_HOST_URL = 'http://192.168.56.10:9000' // SonarQube URL on your slave
+        SONAR_HOST_URL = 'http://192.168.56.10:9000' // SonarQube URL
     }
 
     stages {
@@ -20,7 +20,7 @@ pipeline {
 
         stage('Build') {
             steps {
-                dir('tp-foyer') { // make sure this is where your pom.xml is
+                dir('tp-foyer') {
                     sh 'mvn clean install -DskipTests'
                 }
             }
@@ -50,28 +50,18 @@ pipeline {
                 }
             }
         }
-    }
 
- stage('Quality Gate') {
+        stage('Quality Gate') {
             steps {
-                timeout(time: 5, unit: 'MINUTES') { // wait max 5 min for webhook
+                timeout(time: 2, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
         }
     }
 
-  stage('Quality Gate') {
-             steps {
-                 timeout(time: 5, unit: 'MINUTES') { // wait max 5 min for webhook
-                     waitForQualityGate abortPipeline: true
-                 }
-             }
-         }
-     }
-
     post {
-        success { echo '✅ Build and SonarQube analysis succeeded!' }
-        failure { echo '❌ Build or SonarQube analysis failed!' }
+        success { echo '✅ Build and SonarQube Quality Gate passed!' }
+        failure { echo '❌ Build failed or Quality Gate failed!' }
     }
 }
