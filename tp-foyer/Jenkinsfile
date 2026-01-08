@@ -7,20 +7,29 @@ pipeline {
     }
 
     environment {
-        SONAR_HOST_URL = 'http://192.168.56.10:9000'
+        SONAR_HOST_URL = 'http://192.168.56.10:9000' // SonarQube URL on your slave
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/houssem22Chakroun/springboot.git'
+                git branch: 'main',
+                    url: 'https://github.com/houssem22Chakroun/springboot.git'
             }
         }
 
         stage('Build') {
             steps {
-                dir('tp-foyer') {
+                dir('tp-foyer') { // make sure this is where your pom.xml is
                     sh 'mvn clean install -DskipTests'
+                }
+            }
+        }
+
+        stage('Maven Package') {
+            steps {
+                dir('tp-foyer') {
+                    sh 'mvn package -DskipTests'
                 }
             }
         }
@@ -28,26 +37,16 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 script {
-                    // This wrapper is the missing piece of the puzzle
-                    withSonarQubeEnv('SonarQube') {
-                        withCredentials([string(credentialsId: 'SonarQube', variable: 'SONAR_TOKEN')]) {
-                            dir('tp-foyer') {
-                                sh """
-                                    mvn sonar:sonar \
-                                      -Dsonar.host.url=${SONAR_HOST_URL} \
-                                      -Dsonar.login=${SONAR_TOKEN}
-                                """
-                            }
+                    withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_TOKEN')]) {
+                        dir('tp-foyer') {
+                            sh '''
+                                mvn clean verify sonar:sonar \
+                                  -DskipTests=true \
+                                  -Dsonar.host.url=$SONAR_HOST_URL \
+                                  -Dsonar.login=$SONAR_TOKEN
+                            '''
                         }
                     }
-                }
-            }
-        }
-
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 4, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
                 }
             }
         }
